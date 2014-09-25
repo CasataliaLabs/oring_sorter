@@ -1,10 +1,11 @@
+
 __author__ = 'sreeram'
 import cv2
 import pylab
 import numpy as np
 import sys
 from Tkinter import *
-from repeatedTimer1 import RepeatedTimer
+from repeated_timer1 import RepeatedTimer
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from tkintertable.Tables import TableCanvas
@@ -109,5 +110,5 @@ t = RepeatedTimer(0.01, video)
 #Start and Stop Buttons
 b1 = Button(master, text="Start", bg='white', command=video_start).place(x=50, y=600)
 b2 = Button(master, text="Stop", bg='white', command=video_stop).place(x=400, y=600)
-master.mainloop()
+#~ master.mainloop()
 
