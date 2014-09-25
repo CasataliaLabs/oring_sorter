@@ -4,6 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+import matplotlib.cm as cm
 from Tkinter import *
 from repeated_timer1 import RepeatedTimer
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -33,7 +34,7 @@ master.geometry("1000x1000") #how to set full screen
 f1 = Figure(figsize=(4, 4), dpi=100)
 axis1 = f1.add_subplot(111)
 f1.suptitle("Live Video")
-hIm = axis1.imshow(frame)
+hIm = axis1.imshow(frame,cmap = cm.Greys_r, vmin=20, vmax=80)
 
 print 'test'
 #Creating canvass for placing video frame
@@ -68,7 +69,7 @@ values = [0 for x in range(100)]
 # table creation
 frame_value = Frame(master)
 frame_value.pack()
-frame_value.place(x=175, y=500, width=175, height=70)
+frame_value.place(x=100, y=500,width=300, height=70)
 model = TableModel()
 table = TableCanvas(frame_value, model=model, editable=False)
 table.createTableFrame()
@@ -94,7 +95,9 @@ def showFrame(hIm):
 	if ret == None:
 		print "cap.read() failed"
 		return
-	hIm.set_array(frame)
+	#~ 
+	gray_scale = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+	hIm.set_array(gray_scale)
 	canvas1.show()
 	#~ gray_2 = cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2GRAY)
 	#~ frm_diff = cv2.absdiff(gray_1, gray_2)
@@ -111,7 +114,11 @@ def showFrame(hIm):
 	#~ if cv2.waitKey(1) & 0xFF == ord('q'):
 		#~ exit()
 	toc = time.time()
-	print "showFrameTime", (toc - tic)
+	data = {'1': {'Time': '{0:.3f}'.format(toc - tic),'Gray_value': '{}'.format(gray_scale.min())}}
+	model = table.model
+	model.importDict(data)
+	table.redrawTable()
+	#~ print "showFrameTime", (toc - tic)
 #Function for starting timers
 def video_start():
     timerFrameDisplay.start()
