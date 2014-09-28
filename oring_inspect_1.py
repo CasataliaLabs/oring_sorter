@@ -1,6 +1,6 @@
-
 __author__ = 'sreeram'
 import cv2
+import v4l2capture
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -16,7 +16,7 @@ plt.ion()
 #Capturing video frame
 
 if not 'cap' in locals():
-	cap = cv2.VideoCapture()
+	cap = v4l2capture.Video_device("/dev/video0")
 if not cap.isOpened():
 	cap.open(0)
 #~ gray_1 = cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2GRAY)
