@@ -35,7 +35,7 @@ class CaptureFromCam():
 			#~ return
 			self.camLink.set_format(640, 480)
 			self.resolution = self.camLink.get_format()
-			self.camLink.create_buffers(1)
+			self.camLink.create_buffers(10)
 			self.camLink.queue_all_buffers()
 			print 'camera link established'
 			self.stat = 'initialized'
