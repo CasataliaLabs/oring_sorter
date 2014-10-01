@@ -1,6 +1,5 @@
 __author__ = 'sreeram'
 import cv2
-import v4l2capture
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
@@ -12,21 +11,34 @@ from matplotlib.figure import Figure
 from tkintertable.Tables import TableCanvas
 from tkintertable.TableModels import TableModel
 import time
+from v4l2_capture_class import CaptureFromCam
+import matplotlib.cm as cm
+#~ import os
+
 plt.ion()
 #Capturing video frame
+vidDevicePath = '/dev/video0'
+if (not 'cap' in locals()): #| (cap.camLink == None):
+	cap = CaptureFromCam(vidDevicePath)
 
-if not 'cap' in locals():
-	cap = v4l2capture.Video_device("/dev/video0")
-if not cap.isOpened():
-	cap.open(0)
+if cap.camLink == None:
+	cap = CaptureFromCam(vidDevicePath)
+if cap.camLink == None:	
+	print 'camera error'
+	#~ exit()
+	print 'test exit'
+	sys.exit(0)
+#~ if not cap.isOpened():
+	#~ cap.open(0)
 #~ gray_1 = cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2GRAY)
-ret, frame = cap.read()
-cv2.imwrite("Image.jpg",frame)
-if ret == 0:
-	cap.release()
-	cap.open(1)
-	ret, frame = cap.read()
-	print 'cam failed, second attempt'
+frame = cap.read()
+#~ frameForDraw = frame * 1
+#~ cv2.imwrite("Image.jpg",frame)
+#~ if ret == 0:
+	#~ cap.release()
+	#~ cap.open(1)
+	#~ ret, frame = cap.read()
+	#~ print 'cam failed, second attempt'
 
 #Creating window with title and= geometry
 master = Tk()
@@ -123,22 +135,37 @@ class ShowFrame():
 		
 	def showFrame(self):
 		tic = time.time()
-		ret, self.frame = self.captureDevice.read()
-		if ret == 0:
-			print "reading from camera failed"
+		self.frame = self.captureDevice.read()
+		if self.frame == None:
+			print 'camera read failed, line 140'
+			return
+		#~ if ret == 0:
+			#~ print "reading from camera failed"
 		gray_scale = cv2.cvtColor(self.frame,cv2.COLOR_BGR2GRAY)
-		imBw = gray_scale	> 100
+		ret, imBw = cv2.threshold(gray_scale,127,255,0)
+		#~ contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+		#~ imBw = gray_scale	> 128
+		#~ imBw = imBw * 255
+		#~ imBw = np.astype('uint8')
+		#~ imBw
 		self.axes.clear()
 		if self.kShowType == 0:
 			hIm = self.axes.imshow(self.frame[:,:,[2,1,0]])
+			#~ self.hIm.set_array(self.frame[:,:,[2,1,0]])
 		#~ hIm.set_array(self.frame[:,:,[2,1,0]])
 		elif self.kShowType == 1:
 			
-			hIm = self.axes.imshow(gray_scale)
+			hIm = self.axes.imshow(gray_scale, cmap=cm.Greys_r)
+		elif self.kShowType == 2:
+			hIm = self.axes.imshow(imBw, cmap=cm.Greys_r)
+			
 		else:
 			#~ gray_scale = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-			
-			hIm = self.axes.imshow(imBw)
+			#~ ret,thresh = cv2.threshold(frame_gray1,0,255, 128) #cv2.THRESH_OTSU)
+			contours, hierarchy = cv2.findContours(imBw,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+			bgImageForContourPlot = np.zeros(imBw.shape)
+			cv2.drawContours(bgImageForContourPlot, contours, 1, (255,0,0), 2)
+			hIm = self.axes.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
 		
 		#~ plt.show()
 		canvas1.show()
@@ -150,7 +177,7 @@ class ShowFrame():
 		table.redrawTable()
 		return hIm
 	def changeFrame(self, event):
-		if self.kShowType <= 1:
+		if self.kShowType <= 2:
 			self.kShowType = self.kShowType + 1
 		else:
 			self.kShowType = 0
@@ -172,7 +199,7 @@ objShowFrame.axes = axis1
 objShowFrame.hIm = hIm
 
 #Timer for frame
-timerFrameDisplay = f2.canvas.new_timer(interval=1)
+timerFrameDisplay = f2.canvas.new_timer(interval=0)
 timerFrameDisplay.add_callback(objShowFrame.showFrame)
 
 #Timer for video
