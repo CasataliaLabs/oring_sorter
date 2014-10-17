@@ -2,7 +2,7 @@ import Image
 import select
 import v4l2capture
 import numpy as np
-import pylab as plt
+import matplotlib.pyplot as plt
 import os as os
 import time
 plt.ion()
@@ -33,9 +33,9 @@ class CaptureFromCam():
 			print 'trying try execute line 32 in v4l2_capture_class.py'
 			self.camLink = v4l2capture.Video_device(self.camPath)
 			#~ return
-			self.camLink.set_format(640, 480)
-			self.resolution = self.camLink.get_format()
-			self.camLink.create_buffers(10)
+			self.resolution = self.camLink.set_format(1280, 960)
+			#~ self.resolution = self.camLink.get_format()
+			self.camLink.create_buffers(1)
 			self.camLink.queue_all_buffers()
 			print 'camera link established'
 			self.stat = 'initialized'
@@ -53,7 +53,7 @@ class CaptureFromCam():
 	def read(self):
 		try:
 			self.frameScrap = self.camLink.read_and_queue()
-			self.frameIPL = Image.fromstring("RGB", (self.resolution[0], self.resolution[1]), self.frameScrap)
+			self.frameIPL = Image.fromstring('L', (self.resolution[0], self.resolution[1]), self.frameScrap)
 			self.frameNp = np.asarray(self.frameIPL)
 			self.stat = 'running read frame(s)'
 			return self.frameNp
