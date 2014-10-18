@@ -15,7 +15,7 @@ from v4l2_capture_class import CaptureFromCam
 
 plt.ion()
 
-vidDevicePath = '/dev/video0'
+vidDevicePath = '/dev/video0*'
 if (not 'cap' in locals()): #| (cap.camLink == None):
 	cap = CaptureFromCam(vidDevicePath)
 
@@ -57,6 +57,21 @@ model = TableModel()
 table = TableCanvas(frame_value, model=model, editable=False)
 table.createTableFrame()
 
+objShowFrame = ShowFrame()
+objShowFrame.captureDevice = cap
+objShowFrame.axes = axesFrame
+objShowFrame.axesContour = axesContour
+objShowFrame.hIm = hIm
+
+timerFrameDisplay = figure1.canvas.new_timer(interval=1)
+timerFrameDisplay.add_callback(objShowFrame.showFrame)
+
+timerFrameContour = figure2.canvas.new_timer(interval=1)
+timerFrameContour.add_callback(objShowFrame.showContour)
+
+b1 = Button(master, text="Start", bg='white', command=video_start).place(x=50, y=600)
+b2 = Button(master, text="Stop", bg='white', command=video_stop).place(x=400, y=600)
+
 class ShowFrame():
 	def __init__(self):
 		self.kShowType = 0
@@ -71,54 +86,42 @@ class ShowFrame():
 	def showContour(self):
 		imBw = self.imBw
 		contours, hierarchy = cv2.findContours(imBw,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-		try:
-			bgImageForContourPlot = np.zeros(imBw.shape)
-			self.parentOuter = hierarchy[0,:,3]
-			self.childOuter = self.parentOuter == 0
-			self.IndexOfZeroParentOuter= np.where(self.childOuter == True)[0]
-				
-			self.AreaOfContourOuter = []
-			for iteration in range(0,len(self.IndexOfZeroParentOuter)):
-				self.AreaOfContourOuter.append(cv2.contourArea(contours[self.IndexOfZeroParentOuter[iteration]]))
+		print "The hierarchy is",hierarchy
+		#~ print "contours length", len(contours)
+		
+		bgImageForContourPlot = np.zeros(imBw.shape)
+		self.parent = hierarchy[0,:,3]
+		
+		
+		self.backGround = self.parent == -1
+		print "selfbackground",self.backGround
+		self.indexOfBackGround= np.where(self.backGround == True)[0]
+		self.AreaOfBackGroundContour = []
+		for iteration in range(0,len(self.indexOfBackGround)):
+			self.AreaOfBackGroundContour.append(cv2.contourArea(contours[self.indexOfBackGround[iteration]]))
+		self.maxAreaOfBackGround = np.max(self.AreaOfBackGroundContour)
+		self.indexOfBigBackGround = self.AreaOfBackGroundContour.index(self.maxAreaOfBackGround)
+		print "index of bigbackground",self.indexOfBigBackGround 
+		self.childOuter = self.parent == self.indexOfBackGround[self.indexOfBigBackGround]
+		self.IndexOfZeroParentOuter= np.where(self.childOuter == True)[0]
+		self.AreaOfContourOuter = []
+		
+		for iteration in range(0,len(self.IndexOfZeroParentOuter)):
+			self.AreaOfContourOuter.append(cv2.contourArea(contours[self.IndexOfZeroParentOuter[iteration]]))
+		for iterationOuter in range(0,len(self.IndexOfZeroParentOuter)):
+			if self.AreaOfContourOuter[iterationOuter] >7000:
+				cv2.drawContours(bgImageForContourPlot, contours,self.IndexOfZeroParentOuter[iterationOuter], 255, 3)
+				self.childInner = self.parent == self.IndexOfZeroParentOuter[iterationOuter]
+				self.IndexOfZeroParentInner= np.where(self.childInner == True)[0]
+				self.AreaOfContourInner = []
+				for iteration in range(0,len(self.IndexOfZeroParentInner)):
+					self.AreaOfContourInner.append(cv2.contourArea(contours[self.IndexOfZeroParentInner[iteration]]))
+				for iterationInner in range(0,len(self.IndexOfZeroParentInner)):
+					if self.AreaOfContourInner > 1700:
+						cv2.drawContours(bgImageForContourPlot, contours,self.IndexOfZeroParentInner[iterationInner],255,3) 
 			
-			self.AreaOfContourMaxOuter = np.max(self.AreaOfContourOuter)
-			self.IndexOfMaximumAreaOuter = self.AreaOfContourOuter.index(self.AreaOfContourMaxOuter)
-			
-			self.parentInner = hierarchy[0,:,3]
-			self.childInner = self.parentInner == self.IndexOfZeroParentOuter[self.IndexOfMaximumAreaOuter]
-			self.IndexOfZeroParentInner= np.where(self.childInner == True)[0]
-			self.AreaOfContourInner = []
-				
-			for iteration in range(0,len(self.IndexOfZeroParentInner)):
-				self.AreaOfContourInner.append(cv2.contourArea(contours[self.IndexOfZeroParentInner[iteration]]))
-			
-			self.AreaOfContourMaxInner = np.max(self.AreaOfContourInner)
-			self.IndexOfMaximumAreaInner = self.AreaOfContourInner.index(self.AreaOfContourMaxInner)
-			
-
-			for noParentsIndex in range(0,len(self.IndexOfZeroParentOuter)):
-				if noParentsIndex == self.IndexOfMaximumAreaOuter:
-					self.cnt_OringOuter = contours[self.IndexOfZeroParentOuter[self.IndexOfMaximumAreaOuter]]
-					cv2.drawContours(bgImageForContourPlot, contours, self.IndexOfZeroParentOuter[self.IndexOfMaximumAreaOuter], 255, 1)
-					self.axesContour.clear()
-					hIm = self.axesContour.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
-					
 											
-			for noParentsIndex in range(0,len(self.IndexOfZeroParentInner)):
-				if noParentsIndex == self.IndexOfMaximumAreaInner:
-					self.cnt_OringInner = contours[self.IndexOfZeroParentInner[self.IndexOfMaximumAreaInner]]
-					cv2.drawContours(bgImageForContourPlot, contours, self.IndexOfZeroParentInner[self.IndexOfMaximumAreaInner], 255, 1)
-					self.axesContour.clear()
-					hIm = self.axesContour.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
-								
-		except:
-			print "Oring Out of Focus"
-			contours, hierarchy = cv2.findContours(imBw,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-			bgImageForContourPlot = np.zeros(imBw.shape)
-			cv2.drawContours(bgImageForContourPlot, contours, -1, 255, 1)
-			hIm = self.axesContour.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
-			#~ print "The length of contour is :",len(contours)
-			
+		hIm = self.axesContour.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
 		canvas2.show()
 		
 			
@@ -156,21 +159,5 @@ def video_stop():
     timerFrameDisplay.stop()
     timerFrameContour.stop()
 
-objShowFrame = ShowFrame()
-objShowFrame.captureDevice = cap
-objShowFrame.axes = axesFrame
-objShowFrame.axesContour = axesContour
-objShowFrame.hIm = hIm
-
-
-timerFrameDisplay = figure1.canvas.new_timer(interval=1)
-timerFrameDisplay.add_callback(objShowFrame.showFrame)
-
-timerFrameContour = figure2.canvas.new_timer(interval=1)
-timerFrameContour.add_callback(objShowFrame.showContour)
-
-
-b1 = Button(master, text="Start", bg='white', command=video_start).place(x=50, y=600)
-b2 = Button(master, text="Stop", bg='white', command=video_stop).place(x=400, y=600)
 #~ master.mainloop()
 #~ canvas1.mpl_connect('button_press_event', objShowFrame.changeFrame)
