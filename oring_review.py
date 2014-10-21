@@ -36,31 +36,38 @@ class ShowFrame():
 		
 		ret, imBw = cv2.threshold(self.frame,127,255,0)
 		self.imBw = imBw
-		self.axesFrame.clear()
-		
-		hIm = self.axesFrame.imshow(self.frame, cmap=cm.Greys_r)
-		canvas1.show()
+		#~ if objShowFrame.hIm == None:
+			#~ self.axesFrame.clear()
+			#~ self.hIm = self.axesFrame.imshow(self.frame, cmap=cm.Greys_r)
+			#~ print 'if executing'
+		#~ else:
+		self.hIm.set_data(self.frame)
+			#~ print 'else exectuing'
+		tic = time.time()
+		#~ canvasShowFrame.draw()
+		figureShowFrame.canvas.draw()
 		toc = time.time()
 		data = {'1': {'Time': '{0:.3f}'.format(toc - tic)}}
 		model = table.model
 		model.importDict(data)
 		table.redrawTable()
-		
+		#~ toc = time.time()
+		print toc - tic
 	def oringRadius(self,oringContour):
-		self.xOuter = oringContour
-		self.xOuter1 = self.xOuter[:,:,0]
-		self.x_OringOuter = self.xOuter1[:,0]
-		self.yOuter=oringContour
-		self.yOuter1 = self.yOuter[:,:,1]
-		self.y_OringOuter = self.yOuter1[:,0]
+		self.xOring = oringContour
+		self.xOring1 = self.xOring[:,:,0]
+		self.x_Oring = self.xOring1[:,0]
+		self.yOring=oringContour
+		self.yOring1 = self.yOring[:,:,1]
+		self.y_Oring = self.yOring1[:,0]
 			
 		self.Momnt_Oring = cv2.moments(oringContour)
 		self.cx_Oring = int(self.Momnt_Oring['m10']/self.Momnt_Oring['m00'])
 		self.cy_Oring = int(self.Momnt_Oring['m01']/self.Momnt_Oring['m00'])
 			
-		self.rad_Oring_Outer = np.sqrt(((self.x_OringOuter-self.cx_Oring)**2)+((self.y_OringOuter-self.cy_Oring)**2))
-		self.ang_Oring_Outer = np.arctan2((self.y_OringOuter-self.cy_Oring),(self.x_OringOuter-self.cx_Oring))* 180 / np.pi
-		return self.rad_Oring_Outer,self.ang_Oring_Outer
+		self.rad_Oring = np.sqrt(((self.x_Oring-self.cx_Oring)**2)+((self.y_Oring-self.cy_Oring)**2))
+		self.ang_Oring = np.arctan2((self.y_Oring-self.cy_Oring),(self.x_Oring-self.cx_Oring))* 180 / np.pi
+		return self.rad_Oring,self.ang_Oring
 	
 	def medfilt1(self,radius):
 		N = len(radius)
@@ -125,15 +132,15 @@ class ShowFrame():
 				cv2.drawContours(bgImageForContourPlot, contours,self.IndexOfZeroParentOuter[iterationOuter],(255,0,0),-1)	
 					
 		hIm = self.axesContour.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
-		canvas2.show()
+		canvasShowContour.show()
 						
 def video_start():
     timerFrameDisplay.start()
-    timerFrameContour.start()
+    #~ timerFrameContour.start()
    
 def video_stop():
     timerFrameDisplay.stop()
-    timerFrameContour.stop()
+    #~ timerFrameContour.stop()
 
 vidDevicePath = '/dev/video1*'
 if (not 'cap' in locals()): #| (cap.camLink == None):
@@ -154,23 +161,26 @@ screenWidth=master.winfo_screenwidth()
 screenHeight=master.winfo_screenheight()
 master.geometry(("%dx%d")%(screenWidth,screenHeight)) 
 
-figure1 = Figure(figsize=(4, 4), dpi=100)
-axesFrame = figure1.add_subplot(111)
-figure1 .suptitle("ORINGS")
-hIm = axesFrame.imshow(frame,cmap = cm.Greys_r, vmin=20, vmax=80)
 
-canvas1 = FigureCanvasTkAgg(figure1 , master=master)
-canvas1.get_tk_widget().place(x=10, y=20)
 
-x_codnte = np.arange(0, 100, 1)
-y_codnte = np.array([0] * 100)
+figureShowFrame = Figure(figsize=(4, 4), dpi=100)
+axesFrame = figureShowFrame.add_subplot(111)
+figureShowFrame.suptitle("ORINGS")
+#~ hIm = axesFrame
+hIm = axesFrame.imshow(frame, interpolation='nearest', cmap = cm.Greys_r, vmin=20, vmax=80, animated=True)
 
-figure2 = Figure(figsize=(5, 4.5), dpi=90)
-axesContour = figure2.add_subplot(111)
-figure2 .suptitle("CONTOUR PLOTS")
+canvasShowFrame = FigureCanvasTkAgg(figureShowFrame , master=master)
+canvasShowFrame.get_tk_widget().place(x=10, y=20)
 
-canvas2 = FigureCanvasTkAgg(figure2, master=master)
-canvas2.get_tk_widget().place(x=450, y=20)
+#~ x_codnte = np.arange(0, 100, 1)
+#~ y_codnte = np.array([0] * 100)
+
+figureShowContour = Figure(figsize=(5, 4.5), dpi=90)
+axesContour = figureShowContour.add_subplot(111)
+figureShowContour.suptitle("CONTOUR PLOTS")
+
+canvasShowContour = FigureCanvasTkAgg(figureShowContour, master=master)
+canvasShowContour.get_tk_widget().place(x=450, y=20)
 
 frame_value = Frame(master)
 frame_value.pack()
@@ -186,10 +196,10 @@ objShowFrame.axesFrame = axesFrame
 objShowFrame.axesContour = axesContour
 objShowFrame.hIm = hIm
 
-timerFrameDisplay = figure1.canvas.new_timer(interval=1)
+timerFrameDisplay = figureShowFrame.canvas.new_timer(interval=100)
 timerFrameDisplay.add_callback(objShowFrame.showFrame)
 
-timerFrameContour = figure2.canvas.new_timer(interval=1)
+timerFrameContour = figureShowContour.canvas.new_timer(interval=1)
 timerFrameContour.add_callback(objShowFrame.showContour)
 
 b1 = Button(master, text="Start", bg='white', command=video_start).place(x=50, y=600)
