@@ -44,7 +44,7 @@ class ShowFrame():
 		self.hIm.set_data(self.frame)
 			#~ print 'else exectuing'
 		tic = time.time()
-		#~ canvasShowFrame.draw()
+		canvasShowFrame.draw()
 		figureShowFrame.canvas.draw()
 		toc = time.time()
 		data = {'1': {'Time': '{0:.3f}'.format(toc - tic)}}
@@ -52,7 +52,7 @@ class ShowFrame():
 		model.importDict(data)
 		table.redrawTable()
 		#~ toc = time.time()
-		print toc - tic
+		#~ print toc - tic
 	def oringRadius(self,oringContour):
 		self.xOring = oringContour
 		self.xOring1 = self.xOring[:,:,0]
@@ -136,11 +136,11 @@ class ShowFrame():
 						
 def video_start():
     timerFrameDisplay.start()
-    #~ timerFrameContour.start()
+    timerFrameContour.start()
    
 def video_stop():
     timerFrameDisplay.stop()
-    #~ timerFrameContour.stop()
+    timerFrameContour.stop()
 
 vidDevicePath = '/dev/video1*'
 if (not 'cap' in locals()): #| (cap.camLink == None):

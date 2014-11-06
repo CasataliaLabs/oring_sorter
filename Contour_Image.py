@@ -115,9 +115,9 @@ if __name__ == '__main__':
 	filtered_Radius1 = medfilt1(x1,L)
 	
 	
-filteredOutputInner= filtered_Radius1-rad_Oring_Inner
+filteredOutputInner= rad_Oring_Inner-filtered_Radius1
 filteredOutputOuter= rad_Oring_Outer-filtered_Radius						
-plt.plot(ang_Oring_Inner,filteredOutputInner,'-')
+#~ plt.plot(ang_Oring_Inner,filteredOutputInner,'-')
 plt.plot(ang_Oring_Outer,filteredOutputOuter,'-')
 plt.grid(True)
 plt.show()

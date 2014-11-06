@@ -1,4 +1,3 @@
-__author__ = 'sreeram'
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
@@ -190,6 +189,7 @@ class ShowFrame():
 					for noParentsIndex in range(0,len(self.IndexOfZeroParentOuter)):
 						if noParentsIndex == self.IndexOfMaximumAreaOuter:
 							self.cnt_OringOuter = contours[self.IndexOfZeroParentOuter[self.IndexOfMaximumAreaOuter]]
+							print "length ofcontours",len(self.cnt_OringOuter )
 							cv2.drawContours(bgImageForContourPlot, contours, self.IndexOfZeroParentOuter[self.IndexOfMaximumAreaOuter], 255, 2)
 							hIm = self.axes.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
 													
