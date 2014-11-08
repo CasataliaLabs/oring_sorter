@@ -20,7 +20,6 @@ import os
 
 plt.ion()
 
-
 class ShowFrame():
 	def __init__(self):
 		self.kShowType = 0
@@ -29,35 +28,35 @@ class ShowFrame():
 		self.axesContour = None
 		self.hIm = None
 		self.imBw = None
+		self.frame = None
 		
-		
+	def camAcq(self):
+		#~ if self.frame == None:
+			#~ print 'camera read failed, line 140'
+			#~ return
+		self.frame = self.captureDevice.read()
+
 	def showFrame(self):
 		tic = time.time()
-		self.frame = self.captureDevice.read()
-				
 		if self.frame == None:
-			print 'camera read failed, line 140'
+			print 'no frame in showFrame'
 			return
-		
 		ret, imBw = cv2.threshold(self.frame,127,255,0)
 		self.imBw = imBw
-		#~ if objShowFrame.hIm == None:
-			#~ self.axesFrame.clear()
-			#~ self.hIm = self.axesFrame.imshow(self.frame, cmap=cm.Greys_r)
-			#~ print 'if executing'
-		#~ else:
-		self.hIm.set_data(self.frame)
-			#~ print 'else exectuing'
 		tic = time.time()
-		#~ canvasShowFrame.draw()
-		figureShowFrame.canvas.draw()
+		frameForDisplay = cv2.resize(self.frame, tuple((np.asarray(self.frame.shape))/10))
+		self.hIm.set_data(frameForDisplay)
+		#~ self.hIm.set_data(self.frame)
+		canvasShowFrame.draw()
+		#~ figureShowFrame.canvas.draw()
 		toc = time.time()
 		data = {'1': {'Time': '{0:.3f}'.format(toc - tic)}}
 		model = table.model
 		model.importDict(data)
 		table.redrawTable()
 		#~ toc = time.time()
-		print toc - tic
+		#~ print toc - tic
+
 	def oringRadius(self,oringContour):
 		self.xOring = oringContour
 		self.xOring1 = self.xOring[:,:,0]
@@ -95,12 +94,12 @@ class ShowFrame():
 		return self.filteredOutput,absoluteValueOuter
 		
 	def showContour(self):
+		tic = time.time()
 		self.AreaOfBackGroundContour = []
-		
 		contours, hierarchy = cv2.findContours(self.imBw,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-		
 		bgImageForContourPlot = np.zeros(self.imBw.shape)
 		self.parent = hierarchy[0,:,3]
+		#~ print "hierarchy",hierarchy
 		self.backGround = self.parent == -1
 		self.indexOfBackGround= np.where(self.backGround == True)[0]
 		for iteration in range(0,len(self.indexOfBackGround)):
@@ -113,10 +112,13 @@ class ShowFrame():
 		
 		for iterationOuter in range(0,len(self.IndexOfZeroParentOuter)):
 			self.AreaOfContourOuter=cv2.contourArea(contours[self.IndexOfZeroParentOuter[iterationOuter]])
+		#~ print "outer area",self.AreaOfContourOuter
 			if self.AreaOfContourOuter >10000:
+				#~ print "list of",list(self.parent).count(self.IndexOfZeroParentOuter[iterationOuter])			
 				if list(self.parent).count(self.IndexOfZeroParentOuter[iterationOuter])==1:
 					radius,angle = self.oringRadius(contours[self.IndexOfZeroParentOuter[iterationOuter]])
 					filteredOutput, absoluteValueOuter = self.medfilt1(radius)
+					#~ print "abs value",absoluteValueOuter
 					if absoluteValueOuter>0:
 						cv2.drawContours(bgImageForContourPlot, contours,self.IndexOfZeroParentOuter[iterationOuter],(255,0,0),-1)
 					else:
@@ -132,20 +134,35 @@ class ShowFrame():
 						else:
 							cv2.drawContours(bgImageForContourPlot, contours,innerContourIndex,255,2) 
 				else:
+					
 					cv2.drawContours(bgImageForContourPlot, contours,self.IndexOfZeroParentOuter[iterationOuter],(255,0,0),-1)		
 			else:
+				
 				cv2.drawContours(bgImageForContourPlot, contours,self.IndexOfZeroParentOuter[iterationOuter],(255,0,0),-1)	
-					
+		
+		
+		self.axesContour.clear()
+		
+		#~ bgBwForPlot = bgImageForContourPlot > 128			
+		#~ print np.max(bgBwForPlot)
+		#~ frameForContour = cv2.resize(bgImageForContourPlot, tuple((np.asarray(bgImageForContourPlot.shape))/10))
+		#~ frameForContour = np.resize(bgImageForContourPlot, tuple(np.round((np.asarray(bgImageForContourPlot.shape))/4)))
+		#~ hIm = self.axesContour.imshow(frameForContour, cmap=cm.Greys_r)
 		hIm = self.axesContour.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
 		canvasShowContour.show()
+		toc = time.time()
+		print toc-tic
+		
 						
 def video_start():
-    timerFrameDisplay.start()
-    timerFrameContour.start()
+	timerForFrameAcq.start()
+	timerFrameDisplay.start()
+	#~ timerFrameContour.start()
    
 def video_stop():
-    timerFrameDisplay.stop()
-    timerFrameContour.stop()
+	timerFrameDisplay.stop()
+	timerFrameContour.stop()
+	timerForFrameAcq.stop()
 
 vidDevicePath = '/dev/video1*'
 if (not 'cap' in locals()): #| (cap.camLink == None):
@@ -165,11 +182,11 @@ master.title("Oring GUI")
 screenWidth=master.winfo_screenwidth()
 screenHeight=master.winfo_screenheight()
 master.geometry(("%dx%d")%(screenWidth,screenHeight))
-img = Tkinter.Image("photo", file="drishtiman.gif")
-master.tk.call('wm','iconphoto',master._w,img) 
+#~ img = Tkinter.Image("photo", file="drishtiman.gif")
+#~ master.tk.call('wm','iconphoto',master._w,img) 
 
-top = Toplevel(master = master)
-top.attributes("-topmost", 1)
+#~ top = Toplevel(master = master)
+#~ top.attributes("-topmost", 1)
 
 
 #~ Menu construction-- file menu
@@ -210,15 +227,14 @@ master.bind('<Shift-Q>', video_stop)
 
 
 #~ Drishtiman Image
-img = ImageTk.PhotoImage(Image.open("drishtiman.jpg"))
-panel = Label(master, image = img)
-panel.place(x=1200,y=550)
-
-
+#~ img = ImageTk.PhotoImage(Image.open("drishtiman.jpg"))
+#~ panel = Label(master, image = img)
+#~ panel.place(x=1200,y=550)
 
 figureShowFrame = Figure(figsize=(4, 4), dpi=100)
 axesFrame = figureShowFrame.add_subplot(111)
 figureShowFrame.suptitle("ORINGS")
+axesFrame.clear()
 #~ hIm = axesFrame
 hIm = axesFrame.imshow(frame, interpolation='nearest', cmap = cm.Greys_r, vmin=20, vmax=80, animated=True)
 
@@ -233,14 +249,11 @@ axesContour = figureShowContour.add_subplot(111)
 figureShowContour.suptitle("CONTOUR PLOTS")
 
 
-def deletewidget():
-	canvasShowContour.get_tk_widget().delete("all")
+#~ def deletewidget():
+	#~ canvasShowContour.get_tk_widget().delete("all")
 	
 canvasShowContour = FigureCanvasTkAgg(figureShowContour, master=master)
 canvasShowContour.get_tk_widget().place(x=750, y=100)
-
-
-
 
 frame_value = Frame(master)
 frame_value.pack()
@@ -249,19 +262,21 @@ model = TableModel()
 table = TableCanvas(frame_value, model=model, editable=False)
 table.createTableFrame()
 
-
 objShowFrame = ShowFrame()
 objShowFrame.captureDevice = cap
 objShowFrame.axesFrame = axesFrame
 objShowFrame.axesContour = axesContour
 objShowFrame.hIm = hIm
 
-timerFrameDisplay = figureShowFrame.canvas.new_timer(interval=100)
+timerForFrameAcq = figureShowFrame.canvas.new_timer(interval=5)
+timerForFrameAcq.add_callback(objShowFrame.camAcq)
+
+timerFrameDisplay = figureShowFrame.canvas.new_timer(interval=10)
 timerFrameDisplay.add_callback(objShowFrame.showFrame)
 
-timerFrameContour = figureShowContour.canvas.new_timer(interval=1)
+timerFrameContour = figureShowContour.canvas.new_timer(interval=50)
 timerFrameContour.add_callback(objShowFrame.showContour)
 
-b1 = Button(master, text="DeleteWidget", bg='white', command=deletewidget,height=2,width=10).place(x=1200,y=300)
+#~ b1 = Button(master, text="DeleteWidget", bg='white', command=deletewidget,height=2,width=10).place(x=1200,y=300)
 #~ b2 = Button(master, text="Widget", bg='white', command=widget).place(x=800, y=630)
 #~ master.mainloop()
