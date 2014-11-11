@@ -166,6 +166,11 @@ class ShowFrame():
 			bgImageForContourPlot = np.zeros(imBw.shape)
 			cv2.drawContours(bgImageForContourPlot, contours, 1, (255,0,0), 2)
 			hIm = self.axes.imshow(bgImageForContourPlot, cmap=cm.Greys_r)
+			
+					
+			1/0
+			# now finding the xy co-ordinates of outer edge or oring
+			#~ x1 = cnt_Oring[:,:,0]
 		
 		#~ plt.show()
 		canvas1.show()

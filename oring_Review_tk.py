@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 import matplotlib.cm as cm
-import Tkinter
-from Tkinter import Tk
-from Tkinter import *
+#~ import Tkinter
+from Tkinter import tk
+#~ from Tkinter import *
 import tkMessageBox as MessageBox 
-from repeated_timer1 import RepeatedTimer
+#~ from repeated_timer1 import RepeatedTimer
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from tkintertable.Tables import TableCanvas
@@ -153,6 +153,10 @@ class ShowFrame():
 		toc = time.time()
 		print toc-tic
 		
+	#~ def timer(self):
+		#~ if self.timerCommand == True:
+			#~ self.task()
+			#~ self.root.after(self.timerInterval, self.timer)
 						
 def video_start():
 	timerForFrameAcq.start()
@@ -177,90 +181,72 @@ if cap.camLink == None:
 
 frame = cap.read()
 
-master = Tk()
-master.title("Oring GUI")
-screenWidth=master.winfo_screenwidth()
-screenHeight=master.winfo_screenheight()
-master.geometry(("%dx%d")%(screenWidth,screenHeight))
-#~ img = Tkinter.Image("photo", file="drishtiman.gif")
-#~ master.tk.call('wm','iconphoto',master._w,img) 
+class OringGUI():
+	def __init__(self):
+		self._InitMainWindow()
+		self._InitMenubar()
+		
+	def _InitMainWindow():
+		master = tk.Tk()
+		master.title("Oring GUI")
+		screenWidth=master.winfo_screenwidth()
+		screenHeight=master.winfo_screenheight()
+		master.geometry(("%dx%d")%(screenWidth,screenHeight))
+		self.master = master
+		
+	def _InitMenubar():
+		#~ Menu construction-- file menu
+		master = self.master
+		menubar = Menu(master)
+		filemenu = Menu(menubar, tearoff=0)
+		filemenu.add_command(label="New",command=hello)
+		filemenu.add_command(label="save")
+		filemenu.add_command(label="quit", command=master.quit)
+		menubar.add_cascade(label="file",menu=filemenu)
+		#~ master.config(menu=menubar)
 
-#~ top = Toplevel(master = master)
-#~ top.attributes("-topmost", 1)
+	def _initHelpMenu():
+		#~ help menu
+		helpmenu = Menu(menubar, tearoff=False)
+		helpmenu.add_command(label="Help Docs",command=hello)
+		helpmenu.add_command(label="About",command=about)
+		menubar.add_cascade(label="Help",menu=helpmenu)
+		master.config(menu=menubar)
 
+		#~ start and stopmenu
+		startmenu = Menu(menubar, tearoff=False)
+		startmenu.add_command(label="Start",command=video_start)
+		startmenu.add_command(label="Stop",underline=0,command=video_stop,accelerator="Ctrl+Q")
+		menubar.add_cascade(label="Run",underline=0,menu=startmenu)
+		master.config(menu=menubar)
+		master.bind('<Shift-Q>', video_stop)
 
-#~ Menu construction-- file menu
-def hello():
-    masterlabel=Label(master, text="hello").pack()
-    return
-def about():
-	MessageBox.showinfo(title="About",message="Automatic Oring Inspection Project")
-	return
-menubar = Menu(master)
-filemenu = Menu(menubar, tearoff=0)
-filemenu.add_command(label="New",command=hello)
-filemenu.add_command(label="save")
-filemenu.add_command(label="quit", command=master.quit)
-menubar.add_cascade(label="file",menu=filemenu)
-#~ master.config(menu=menubar)
+		figureShowFrame = Figure(figsize=(4, 4), dpi=100)
+		axesFrame = figureShowFrame.add_subplot(111)
+		figureShowFrame.suptitle("ORINGS")
+		axesFrame.clear()
+		#~ hIm = axesFrame
+		hIm = axesFrame.imshow(frame, interpolation='nearest', cmap = cm.Greys_r, vmin=20, vmax=80, animated=True)
 
-#~ help menu
-helpmenu = Menu(menubar, tearoff=False)
-helpmenu.add_command(label="Help Docs",command=hello)
-helpmenu.add_command(label="About",command=about)
-menubar.add_cascade(label="Help",menu=helpmenu)
-master.config(menu=menubar)
+		canvasShowFrame = FigureCanvasTkAgg(figureShowFrame , master=master)
+		canvasShowFrame.get_tk_widget().place(x=150, y=100)
 
-#~ start and stopmenu
-startmenu = Menu(menubar, tearoff=False)
-startmenu.add_command(label="Start",command=video_start)
-startmenu.add_command(label="Stop",underline=0,command=video_stop,accelerator="Ctrl+Q")
-menubar.add_cascade(label="Run",underline=0,menu=startmenu)
-master.config(menu=menubar)
-master.bind('<Shift-Q>', video_stop)
+		#~ x_codnte = np.arange(0, 100, 1)
+		#~ y_codnte = np.array([0] * 100)
 
-#~ startmenu = Menu(menubar, tearoff=False)
-#~ startmenu.add_command(label="Start",command=video_start)
-#~ startmenu.add_command(label="Stop",command=video_stop)
-#~ menubar.add_cascade(label="Run",menu=startmenu)
-#~ master.config(menu=menubar)
+		figureShowContour = Figure(figsize=(4, 4), dpi=100)
+		axesContour = figureShowContour.add_subplot(111)
+		figureShowContour.suptitle("CONTOUR PLOTS")
 
+		canvasShowContour = FigureCanvasTkAgg(figureShowContour, master=master)
+		canvasShowContour.get_tk_widget().place(x=750, y=100)
 
-#~ Drishtiman Image
-#~ img = ImageTk.PhotoImage(Image.open("drishtiman.jpg"))
-#~ panel = Label(master, image = img)
-#~ panel.place(x=1200,y=550)
-
-figureShowFrame = Figure(figsize=(4, 4), dpi=100)
-axesFrame = figureShowFrame.add_subplot(111)
-figureShowFrame.suptitle("ORINGS")
-axesFrame.clear()
-#~ hIm = axesFrame
-hIm = axesFrame.imshow(frame, interpolation='nearest', cmap = cm.Greys_r, vmin=20, vmax=80, animated=True)
-
-canvasShowFrame = FigureCanvasTkAgg(figureShowFrame , master=master)
-canvasShowFrame.get_tk_widget().place(x=150, y=100)
-
-#~ x_codnte = np.arange(0, 100, 1)
-#~ y_codnte = np.array([0] * 100)
-
-figureShowContour = Figure(figsize=(4, 4), dpi=100)
-axesContour = figureShowContour.add_subplot(111)
-figureShowContour.suptitle("CONTOUR PLOTS")
-
-
-#~ def deletewidget():
-	#~ canvasShowContour.get_tk_widget().delete("all")
-	
-canvasShowContour = FigureCanvasTkAgg(figureShowContour, master=master)
-canvasShowContour.get_tk_widget().place(x=750, y=100)
-
-frame_value = Frame(master)
-frame_value.pack()
-frame_value.place(x=500, y=550,width=300, height=70)
-model = TableModel()
-table = TableCanvas(frame_value, model=model, editable=False)
-table.createTableFrame()
+		frame_value = Frame(master)
+		frame_value.pack()
+		frame_value.place(x=500, y=550,width=300, height=70)
+		model = TableModel()
+		table = TableCanvas(frame_value, model=model, editable=False)
+		table.createTableFrame()
 
 objShowFrame = ShowFrame()
 objShowFrame.captureDevice = cap
@@ -280,3 +266,31 @@ timerFrameContour.add_callback(objShowFrame.showContour)
 #~ b1 = Button(master, text="DeleteWidget", bg='white', command=deletewidget,height=2,width=10).place(x=1200,y=300)
 #~ b2 = Button(master, text="Widget", bg='white', command=widget).place(x=800, y=630)
 #~ master.mainloop()
+
+
+#~ def deletewidget():
+	#~ canvasShowContour.get_tk_widget().delete("all")
+#~ img = Tkinter.Image("photo", file="drishtiman.gif")
+#~ master.tk.call('wm','iconphoto',master._w,img) 
+
+#~ top = Toplevel(master = master)
+#~ top.attributes("-topmost", 1)
+
+#~ startmenu = Menu(menubar, tearoff=False)
+#~ startmenu.add_command(label="Start",command=video_start)
+#~ startmenu.add_command(label="Stop",command=video_stop)
+#~ menubar.add_cascade(label="Run",menu=startmenu)
+#~ master.config(menu=menubar)
+
+
+#~ Drishtiman Image
+#~ img = ImageTk.PhotoImage(Image.open("drishtiman.jpg"))
+#~ panel = Label(master, image = img)
+#~ panel.place(x=1200,y=550)
+
+#~ def hello():
+    #~ masterlabel=Label(master, text="hello").pack()
+    #~ return
+#~ def about():
+	#~ MessageBox.showinfo(title="About",message="Automatic Oring Inspection Project")
+	#~ return
